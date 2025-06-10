@@ -62,6 +62,9 @@
 #define IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING
 #endif
 
+#include <Engine/Rendering/Renderer.h>
+#include <Engine/RHI/RHI.h>
+
 // Current version of the backend use 1 descriptor for the font atlas + as many as additional calls done to ImGui_ImplVulkan_AddTexture().
 // It is expected that as early as Q1 2025 the backend will use a few more descriptors. Use this value + number of desired calls to ImGui_ImplVulkan_AddTexture().
 #define IMGUI_IMPL_VULKAN_MINIMUM_IMAGE_SAMPLER_POOL_SIZE   (1)     // Minimum per atlas
@@ -106,6 +109,10 @@ struct ImGui_ImplVulkan_InitInfo
     const VkAllocationCallbacks*    Allocator;
     void                            (*CheckVkResultFn)(VkResult err);
     VkDeviceSize                    MinAllocationSize;          // Minimum allocation size. Set to 1024*1024 to satisfy zealous best practices validation layer and waste a little memory.
+
+    // Custom ClockWorkEngine
+    VkDescriptorSetLayout           BindlessDescriptorSetLayout;
+    VkDescriptorSet                 BindlessDescriptorSet;
 };
 
 // Follow "Getting Started" link and check examples/ folder to learn about using backends!
