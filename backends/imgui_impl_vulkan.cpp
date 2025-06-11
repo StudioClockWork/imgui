@@ -89,7 +89,8 @@
         #define IM_MAX(A, B) (((A) >= (B)) ? (A) : (B))
     #endif
 
-    #include <Engine/RHI/Vulkan/VulkanRHI.h>
+    #include <Engine/Rendering/Primitives/Texture2D.h>
+
     #include <ClockWorkEngine.h>
 
     // Visual Studio warnings
@@ -230,7 +231,7 @@ struct ImGui_ImplVulkan_WindowRenderBuffers {
 };
 
 struct ImGui_ImplVulkan_Texture {
-    ClockWorkEngine::TextureHandle Texture;
+    nvrhi::TextureHandle Texture;
 
     ImGui_ImplVulkan_Texture() {
         memset((void*)this, 0, sizeof(*this));
@@ -267,7 +268,7 @@ struct ImGui_ImplVulkan_Data {
     VkDescriptorPool DescriptorPool;
 
     // Texture management
-    ClockWorkEngine::TextureHandle FontTexture;
+    Ref<ClockWorkEngine::Texture2D> FontTexture;
     VkCommandPool TexCommandPool;
     VkCommandBuffer TexCommandBuffer;
 
@@ -632,7 +633,7 @@ bool ImGui_ImplVulkan_CreateFontsTexture() {
     // Destroy existing texture (if any)
     if (bd->FontTexture) {
         vkQueueWaitIdle(v->Queue);
-        bd->FontTexture.Release();
+        bd->FontTexture = nullptr;
     }
 
     unsigned char* pixels;
@@ -641,27 +642,20 @@ bool ImGui_ImplVulkan_CreateFontsTexture() {
     size_t upload_size = width * height * 4 * sizeof(char);
 
     ClockWorkEngine::Buffer buffer = ClockWorkEngine::Buffer::Copy(pixels, upload_size);
-
-    ClockWorkEngine::TextureDesc textureDesc;
-    textureDesc.arraySize = 1;
-    textureDesc.mipLevels = 1;
-    textureDesc.width = width;
-    textureDesc.height = height;
-    textureDesc.isShaderResource = true;
-    textureDesc.depth = 1;
-    textureDesc.accessMode = ClockWorkEngine::CpuAccessMode::None;
-    textureDesc.samplingCount = ClockWorkEngine::SamplingCount::_1;
-    textureDesc.type = ClockWorkEngine::TextureType::Texture2D;
-    textureDesc.format = ClockWorkEngine::Format::RGBA8_UNORM;
-
-    ClockWorkEngine::TextureHandle fontTexture = ClockWorkEngine::Renderer::GetRHIDevice()->CreateTexture(textureDesc);
-    fontTexture->FromBuffer(buffer);
-    buffer.Release();
-    ClockWorkEngine::Renderer::GetRHIDevice()->RegisterBindlessTexture2D(fontTexture);
+    ClockWorkEngine::Texture2DDesc desc = {
+        .debugName = "Imgui Font Texture",
+        .width = width,
+        .height = height,
+        .format = nvrhi::Format::RGBA8_SNORM,
+    };
+    Ref<ClockWorkEngine::Texture2D> fontTexture = Ref<ClockWorkEngine::Texture2D>::Create(desc, buffer);
     bd->FontTexture = fontTexture;
+    buffer.Release();
 
+    // TODO: register bindless texture
+    // ClockWorkEngine::Renderer::GetRHIDevice()->RegisterBindlessTexture2D(fontTexture);
     // Store our identifier
-    io.Fonts->SetTexID((ImTextureID)fontTexture->GetBindlessResourceID());
+    io.Fonts->SetTexID((ImTextureID)/*fontTexture->GetBindlessResourceID()*/0);
     return true;
 }
 
@@ -672,7 +666,7 @@ void ImGui_ImplVulkan_DestroyFontsTexture() {
     ImGui_ImplVulkan_InitInfo* v = &bd->VulkanInitInfo;
 
     if (bd->FontTexture) {
-        bd->FontTexture.Release();
+        bd->FontTexture = nullptr;
     }
 }
 

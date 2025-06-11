@@ -9719,14 +9719,20 @@ static void ImGui::TabBarLayout(ImGuiTabBar* tab_bar)
         if (section_n == 2)
             tab_offset = ImMin(ImMax(0.0f, tab_bar->BarRect.GetWidth() - section->Width), tab_offset);
 
+        float additionalIconSize = 0.0f;
         for (int tab_n = 0; tab_n < section->TabCount; tab_n++)
         {
             ImGuiTabItem* tab = &tab_bar->Tabs[section_tab_index + tab_n];
             tab->Offset = tab_offset;
+            // Custom ClockWorkEngine: Window Icon
+            if (tab->Window && tab->Window->WindowIcon != 0xffffffffffffffff) {
+                additionalIconSize = g.FontSize + g.Style.FramePadding.x;
+                tab_offset += additionalIconSize;
+            }
             tab->NameOffset = -1;
             tab_offset += tab->Width + (tab_n < section->TabCount - 1 ? g.Style.ItemInnerSpacing.x : 0.0f);
         }
-        tab_bar->WidthAllTabs += ImMax(section->Width + section->Spacing, 0.0f);
+        tab_bar->WidthAllTabs += ImMax(section->Width + section->Spacing + additionalIconSize, 0.0f);
         tab_offset += section->Spacing;
         section_tab_index += section->TabCount;
     }
@@ -10359,6 +10365,13 @@ bool    ImGui::TabItemEx(ImGuiTabBar* tab_bar, const char* label, bool* p_open, 
     else
         window->DC.CursorPos = tab_bar->BarRect.Min + ImVec2(tab->Offset, 0.0f);
     ImVec2 pos = window->DC.CursorPos;
+
+    // Custom ClockWorkEngine: Window Icon
+    if (tab-> Window && tab->Window->WindowIcon != 0xffffffffffffffff) {
+        size.x += g.FontSize + tab_bar->FramePadding.x;
+        tab->Width = size.x;
+    }
+
     ImRect bb(pos, pos + size);
 
     // We don't have CPU clipping primitives to clip the CloseButton (until it becomes a texture), so need to add an extra draw call (temporary in the case of vertical animation)
@@ -10509,6 +10522,14 @@ bool    ImGui::TabItemEx(ImGuiTabBar* tab_bar, const char* label, bool* p_open, 
         const ImGuiID close_button_id = p_open ? GetIDWithSeed("#CLOSE", NULL, docked_window ? docked_window->ID : id) : 0;
         bool just_closed;
         bool text_clipped;
+
+        // Custom ClockWorkEngine: Window Icon
+        if (tab-> Window && tab->Window->WindowIcon != 0xffffffffffffffff) {
+            ImRect tab_icon_clip_bb(bb.Min.x + tab_bar->FramePadding.x, bb.Min.y + tab_bar->FramePadding.y, bb.Min.x + tab_bar->FramePadding.x + g.FontSize, bb.Max.y - tab_bar->FramePadding.y);
+            display_draw_list->AddImage(tab->Window->WindowIcon, tab_icon_clip_bb.Min, tab_icon_clip_bb.Max);
+            bb.Min.x += g.FontSize + tab_bar->FramePadding.x;
+        }
+
         TabItemLabelAndCloseButton(display_draw_list, bb, tab_just_unsaved ? (flags & ~ImGuiTabItemFlags_UnsavedDocument) : flags, tab_bar->FramePadding, label, id, close_button_id, tab_contents_visible, &just_closed, &text_clipped);
         if (just_closed && p_open != NULL)
         {
@@ -10577,6 +10598,7 @@ ImVec2 ImGui::TabItemCalcSize(const char* label, bool has_close_button_or_unsave
         size.x += g.Style.FramePadding.x + (g.Style.ItemInnerSpacing.x + g.FontSize); // We use Y intentionally to fit the close button circle.
     else
         size.x += g.Style.FramePadding.x + 1.0f;
+
     return ImVec2(ImMin(size.x, TabBarCalcMaxTabWidth()), size.y);
 }
 

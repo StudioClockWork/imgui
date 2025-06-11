@@ -1258,6 +1258,7 @@ struct ImGuiNextWindowData
     ImGuiWindowClass            WindowClass;
     ImVec2                      MenuBarOffsetMinVal;    // (Always on) This is not exposed publicly, so we don't clear it and it doesn't have a corresponding flag (could we? for consistency?)
     ImGuiWindowRefreshFlags     RefreshFlagsVal;
+    ImTextureID                 WindowIcon = 0xffffffffffffffff;// Icon to display in the title bar (not exposed publicly, so we don't clear it and it doesn't have a corresponding flag)
 
     ImGuiNextWindowData()       { memset(this, 0, sizeof(*this)); }
     inline void ClearFlags()    { HasFlags = ImGuiNextWindowDataFlags_None; }
@@ -2844,6 +2845,9 @@ struct IMGUI_API ImGuiWindow
     ImGuiDockNode*          DockNode;                           // Which node are we docked into. Important: Prefer testing DockIsActive in many cases as this will still be set when the dock node is hidden.
     ImGuiDockNode*          DockNodeAsHost;                     // Which node are we owning (for parent windows)
     ImGuiID                 DockId;                             // Backup of last valid DockNode->ID, so single window remember their dock node id even when they are not bound any more
+
+    ImTextureID             WindowIcon = 0xffffffffffffffff;
+    ImVec2                  WindowIconSize = {-1, -1};
 
 public:
     ImGuiWindow(ImGuiContext* context, const char* name);

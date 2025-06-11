@@ -63,7 +63,7 @@
 #endif
 
 #include <Engine/Rendering/Renderer.h>
-#include <Engine/RHI/RHI.h>
+#include <Engine/Rendering/NVRHI.h>
 
 // Current version of the backend use 1 descriptor for the font atlas + as many as additional calls done to ImGui_ImplVulkan_AddTexture().
 // It is expected that as early as Q1 2025 the backend will use a few more descriptors. Use this value + number of desired calls to ImGui_ImplVulkan_AddTexture().

@@ -7298,7 +7298,14 @@ void ImGui::RenderWindowTitleBarContents(ImGuiWindow* window, const ImRect& titl
         close_button_pos = ImVec2(title_bar_rect.Max.x - pad_r - button_sz, title_bar_rect.Min.y + style.FramePadding.y);
         pad_r += button_sz + style.ItemInnerSpacing.x;
     }
-    if (has_collapse_button && style.WindowMenuButtonPosition == ImGuiDir_Right)
+
+    // Custom ClockWorkEngine: Window Icon
+    if (window->WindowIcon != 0xffffffffffffffff) {
+        ImRect tab_icon_clip_bb(title_bar_rect.Min.x + style.FramePadding.x, title_bar_rect.Min.y + style.FramePadding.y, title_bar_rect.Min.x + style.FramePadding.x + g.FontSize, title_bar_rect.Max.y - style.FramePadding.y);
+        window->DrawList->AddImage(window->WindowIcon, tab_icon_clip_bb.Min, tab_icon_clip_bb.Max);
+        pad_l += g.FontSize + style.FramePadding.x;
+    }
+   /* if (has_collapse_button && style.WindowMenuButtonPosition == ImGuiDir_Right)
     {
         collapse_button_pos = ImVec2(title_bar_rect.Max.x - pad_r - button_sz, title_bar_rect.Min.y + style.FramePadding.y);
         pad_r += button_sz + style.ItemInnerSpacing.x;
@@ -7307,12 +7314,12 @@ void ImGui::RenderWindowTitleBarContents(ImGuiWindow* window, const ImRect& titl
     {
         collapse_button_pos = ImVec2(title_bar_rect.Min.x + pad_l, title_bar_rect.Min.y + style.FramePadding.y);
         pad_l += button_sz + style.ItemInnerSpacing.x;
-    }
+    }*/
 
     // Collapse button (submitting first so it gets priority when choosing a navigation init fallback)
-    if (has_collapse_button)
+    /*if (has_collapse_button)
         if (CollapseButton(window->GetID("#COLLAPSE"), collapse_button_pos, NULL))
-            window->WantCollapseToggle = true; // Defer actual collapsing to next frame as we are too far in the Begin() function
+            window->WantCollapseToggle = true;*/ // Defer actual collapsing to next frame as we are too far in the Begin() function
 
     // Close button
     if (has_close_button)
@@ -7449,6 +7456,10 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
     const int current_frame = g.FrameCount;
     const bool first_begin_of_the_frame = (window->LastFrameActive != current_frame);
     window->IsFallbackWindow = (g.CurrentWindowStack.Size == 0 && g.WithinFrameScopeWithImplicitWindow);
+
+    // Custom ClockWorkEngine: Window Icon
+    window->WindowIcon = g.NextWindowData.WindowIcon;
+    g.NextWindowData.WindowIcon = 0xffffffffffffffff;
 
     // Update the Appearing flag (note: the BeginDocked() path may also set this to true later)
     bool window_just_activated_by_user = (window->LastFrameActive < current_frame - 1); // Not using !WasActive because the implicit "Debug" window would always toggle off->on
@@ -8893,6 +8904,11 @@ void ImGui::SetNextWindowViewport(ImGuiID id)
     ImGuiContext& g = *GImGui;
     g.NextWindowData.HasFlags |= ImGuiNextWindowDataFlags_HasViewport;
     g.NextWindowData.ViewportId = id;
+}
+
+void ImGui::SetNextWindowIcon (ImTextureID textureID) {
+    ImGuiContext& g = *GImGui;
+    g.NextWindowData.WindowIcon = textureID;
 }
 
 void ImGui::SetNextWindowDockID(ImGuiID id, ImGuiCond cond)
@@ -18644,6 +18660,7 @@ static void ImGui::DockNodeUpdateTabBar(ImGuiDockNode* node, ImGuiWindow* host_w
         tab_bar->SelectedTabId = tab_bar->NextSelectedTabId = tab_bar->Tabs.back().Window->TabId;
 
     // Begin tab bar
+    // TODO Logan: Add window icon in tabs
     ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_AutoSelectNewTabs; // | ImGuiTabBarFlags_NoTabListScrollingButtons);
     tab_bar_flags |= ImGuiTabBarFlags_SaveSettings | ImGuiTabBarFlags_DockNode;// | ImGuiTabBarFlags_FittingPolicyScroll;
     tab_bar_flags |= ImGuiTabBarFlags_DrawSelectedOverline;
