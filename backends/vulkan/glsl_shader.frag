@@ -18,5 +18,5 @@ layout(location = 0) in struct {
 
 void main()
 {
-    fColor = In.Color ;//* texture(uTexture2DRegister[pc.texID], In.UV.st);
+    fColor = In.Color * texture(uTexture2DRegister[pc.texID], In.UV.st);
 }
